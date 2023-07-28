@@ -1,69 +1,8 @@
 use rusqlite::{types::FromSql, Connection, Result};
-use std::{fmt::Display, str::FromStr};
 
-#[derive(Debug)]
-enum TaskStatus {
-    Done,
-    Undone,
-    Archived,
-}
-
-impl Display for TaskStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TaskStatus::Archived => write!(f, "Archived"),
-            TaskStatus::Done => write!(f, "Done"),
-            TaskStatus::Undone => write!(f, "Undone"),
-        }
-    }
-}
-
-impl FromStr for TaskStatus {
-    type Err = ();
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s {
-            "Archived" => Ok(TaskStatus::Archived),
-            "Done" => Ok(TaskStatus::Done),
-            "Undone" => Ok(TaskStatus::Undone),
-            _ => panic!("Invalid task status"),
-        }
-    }
-}
-
-impl FromSql for TaskStatus {
-    fn column_result(value: rusqlite::types::ValueRef<'_>) -> rusqlite::types::FromSqlResult<Self> {
-        match value.as_str()? {
-            "Done" => Ok(TaskStatus::Done),
-            "Undone" => Ok(TaskStatus::Undone),
-            "Archived" => Ok(TaskStatus::Archived),
-            _ => Err(rusqlite::types::FromSqlError::InvalidType),
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Task {
-    id: i32,
-    title: String,
-    text: String,
-    status: TaskStatus,
-    tag: Option<String>,
-    due_date: Option<String>,
-}
-
-impl Default for Task {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            title: Default::default(),
-            text: Default::default(),
-            status: TaskStatus::Undone,
-            tag: Default::default(),
-            due_date: Default::default(),
-        }
-    }
-}
+mod task;
+use crate::task::Task;
+use crate::task::TaskStatus;
 
 fn main() -> Result<()> {
     let conn = Connection::open("tasks.db")?;
@@ -99,7 +38,7 @@ fn main() -> Result<()> {
     )?;
 
     let mut stmt = conn.prepare("SELECT id, title, text, status, tag, due_date FROM Tasks")?;
-    let task_iter = stmt.query_map([], |row| {
+    let person_iter = stmt.query_map([], |row| {
         Ok(Task {
             id: row.get(0)?,
             title: row.get(1)?,
@@ -110,8 +49,8 @@ fn main() -> Result<()> {
         })
     })?;
 
-    for task in task_iter {
-        println!("Found task {:?}", task.unwrap());
+    for person in person_iter {
+        println!("Found person {:?}", person.unwrap());
     }
     Ok(())
 }
