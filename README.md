@@ -6,3 +6,6 @@ A simple clli todo app written in Rust.
 ```bash
 cargo build --release
 ```
+
+## Crates Used
+- rusqlite
