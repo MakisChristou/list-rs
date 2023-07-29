@@ -47,6 +47,9 @@ enum Commands {
 
     /// Sets a task to Undone
     Undone { id: i32 },
+
+    /// Search for a task by its contents
+    Search {content: String},
 }
 
 fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F) {
@@ -67,7 +70,9 @@ fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F) {
 fn main() -> Result<()> {
     let db_handler = DatabaseHandler::new("tasks.db");
 
-    let tasks = db_handler.read_tasks();
+    let mut tasks = db_handler.read_tasks();
+
+    tasks.sort_by(|a, b| b.created_at.cmp(&a.created_at)); 
 
     let cli = Cli::parse();
 
@@ -98,6 +103,9 @@ fn main() -> Result<()> {
             Err(e) => {
                 println!("Error removing task {}", e)
             }
+        },
+        Some(Commands::Search { content }) => {
+            print_tasks(&tasks, |task| task.text.contains(content));
         },
         Some(Commands::Update { id, text }) => {
             let task = db_handler.read_task(*id);
