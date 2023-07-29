@@ -104,7 +104,10 @@ fn main() -> Result<()> {
             match task {
                 Some(mut task) => {
                     task.text = (*text).clone();
-                    db_handler.update_task(*id, &task);
+                    match db_handler.update_task(*id, &task) {
+                        Ok(_) => {println!("Task {} updated", id)},
+                        Err(e) => {println!("Error updating task {}", e)}
+                    }
                 }
                 None => {
                     println!("Task with id {} does not exist", *id);
@@ -119,7 +122,7 @@ fn main() -> Result<()> {
                     task.status = TaskStatus::Done;
                     match db_handler.update_task(*id, &task) {
                         Ok(_) => {
-                            println!("Task Done")
+                            println!("Task {} set to Done", id)
                         }
                         Err(e) => {
                             println!("Error modifying task {}", e)
@@ -139,7 +142,7 @@ fn main() -> Result<()> {
                     task.status = TaskStatus::Archived;
                     match db_handler.update_task(*id, &task) {
                         Ok(_) => {
-                            println!("Task Done")
+                            println!("Task {} set to Archived", id)
                         }
                         Err(e) => {
                             println!("Error modifying task {}", e)
@@ -159,7 +162,7 @@ fn main() -> Result<()> {
                     task.status = TaskStatus::Undone;
                     match db_handler.update_task(*id, &task) {
                         Ok(_) => {
-                            println!("Task Undone")
+                            println!("Task {} set to Undone", id)
                         }
                         Err(e) => {
                             println!("Error modifying task {}", e)
