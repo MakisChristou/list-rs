@@ -21,16 +21,16 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Adds a todo
+    /// Adds a task
     Add { text: String },
 
-    /// Removes a todo
+    /// Removes a task
     Remove { id: i32 },
 
-    /// Updates a todo with a given id
+    /// Updates a task with a given id
     Update { id: i32, text: String },
 
-    /// Lists a single todo or all
+    /// Lists a single task or all
     List { id: Option<i32> },
 
     /// List all tasks
@@ -42,10 +42,10 @@ enum Commands {
     /// Set a task to Archived
     Archive { id: i32 },
 
-    /// Sets a task to done
+    /// Sets a task to Done
     Done { id: i32 },
 
-    /// Sets a task to done
+    /// Sets a task to Undone
     Undone { id: i32 },
 }
 
@@ -53,8 +53,8 @@ fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F) {
     println!("");
     if tasks.is_empty() {
         println!(
-            "Todo list is empty. Run {} to add a new task.",
-            "todo-rs add".bold().color("Blue")
+            "task list is empty. Run {} to add a new task.",
+            "task-rs add".bold().color("Blue")
         );
     } else {
         for task in tasks.iter().filter(|&x| filter(x)) {
