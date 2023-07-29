@@ -5,52 +5,10 @@ mod args;
 mod db_handler;
 mod task;
 
+use crate::args::{Cli, Commands};
 use crate::db_handler::DatabaseHandler;
 use crate::task::Task;
 use crate::task::TaskStatus;
-
-use clap::{Parser, Subcommand};
-
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-#[command(propagate_version = true)]
-struct Cli {
-    #[command(subcommand)]
-    command: Option<Commands>,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-    /// Adds a task
-    Add { text: String },
-
-    /// Removes a task
-    Remove { id: i32 },
-
-    /// Updates a task with a given id
-    Update { id: i32, text: String },
-
-    /// Lists a single task or all
-    List { id: Option<i32> },
-
-    /// List all tasks
-    All {},
-
-    /// List archived tasks
-    Archived {},
-
-    /// Set a task to Archived
-    Archive { id: i32 },
-
-    /// Sets a task to Done
-    Done { id: i32 },
-
-    /// Sets a task to Undone
-    Undone { id: i32 },
-
-    /// Search for a task by its contents
-    Search {content: String},
-}
 
 fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F) {
     println!("");
@@ -71,10 +29,9 @@ fn main() -> Result<()> {
     let db_handler = DatabaseHandler::new("tasks.db");
 
     let mut tasks = db_handler.read_tasks();
+    tasks.sort_by(|a, b| b.created_at.cmp(&a.created_at));
 
-    tasks.sort_by(|a, b| b.created_at.cmp(&a.created_at)); 
-
-    let cli = Cli::parse();
+    let cli = Cli::parse_arguments();
 
     match &cli.command {
         Some(Commands::Add { text }) => {
@@ -106,7 +63,7 @@ fn main() -> Result<()> {
         },
         Some(Commands::Search { content }) => {
             print_tasks(&tasks, |task| task.text.contains(content));
-        },
+        }
         Some(Commands::Update { id, text }) => {
             let task = db_handler.read_task(*id);
 
