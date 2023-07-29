@@ -39,6 +39,9 @@ pub enum Commands {
 
     /// Search for a task by its contents
     Search { content: String },
+
+    /// Revert last change
+    Undo {},
 }
 
 impl Cli {

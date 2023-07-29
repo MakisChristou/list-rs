@@ -144,6 +144,12 @@ fn main() -> Result<()> {
                 }
             }
         }
+        Some(Commands::Undo {}) => match db_handler.undo() {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Error undoing task {}", e)
+            }
+        },
         None => {
             print_tasks(&tasks, |task| task.status != TaskStatus::Archived);
         }
