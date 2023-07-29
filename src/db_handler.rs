@@ -1,7 +1,5 @@
-use rusqlite::{params, Connection};
-
 use crate::task::Task;
-
+use rusqlite::{params, Connection, Error};
 pub struct DatabaseHandler {
     pub conn: Connection,
 }
@@ -13,7 +11,6 @@ impl DatabaseHandler {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS Tasks (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                title       TEXT NOT NULL,
                 text        TEXT NOT NULL,
                 status      TEXT NOT NULL,
                 tag         TEXT,
@@ -32,7 +29,6 @@ impl DatabaseHandler {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS Tasks (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                title       TEXT NOT NULL,
                 text        TEXT NOT NULL,
                 status      TEXT NOT NULL,
                 tag         TEXT,
@@ -45,33 +41,31 @@ impl DatabaseHandler {
         DatabaseHandler { conn }
     }
 
-    pub fn create_task(&self, task: Task) {
+    pub fn create_task(&self, task: Task) -> rusqlite::Result<usize> {
         self.conn.execute(
-            "INSERT INTO Tasks (title, text, status, tag, due_date) VALUES (?1, ?2, ?3, ?4, ?5)",
+            "INSERT INTO Tasks (text, status, tag, due_date) VALUES (?1, ?2, ?3, ?4)",
             (
-                &task.title,
                 &task.text,
                 &task.status.to_string(),
                 &task.tag,
                 &task.due_date,
             ),
-        ).unwrap();
+        )
     }
 
     pub fn read_tasks(&self) -> Vec<Task> {
         let mut stmt = self
             .conn
-            .prepare("SELECT id, title, text, status, tag, due_date FROM Tasks")
+            .prepare("SELECT id, text, status, tag, due_date FROM Tasks")
             .unwrap();
         let task_iter = stmt
             .query_map([], |row| {
                 Ok(Task {
                     id: row.get(0)?,
-                    title: row.get(1)?,
-                    text: row.get(2)?,
-                    status: row.get(3)?,
-                    tag: row.get(4)?,
-                    due_date: row.get(5)?,
+                    text: row.get(1)?,
+                    status: row.get(2)?,
+                    tag: row.get(3)?,
+                    due_date: row.get(4)?,
                 })
             })
             .unwrap();
@@ -88,17 +82,16 @@ impl DatabaseHandler {
     pub fn read_task(&self, id: i32) -> Option<Task> {
         let mut stmt = self
             .conn
-            .prepare("SELECT id, title, text, status, tag, due_date FROM Tasks WHERE id = ?1")
+            .prepare("SELECT id, text, status, tag, due_date FROM Tasks WHERE id = ?1")
             .unwrap();
         let task_iter = stmt
             .query_map([id], |row| {
                 Ok(Task {
                     id: row.get(0)?,
-                    title: row.get(1)?,
-                    text: row.get(2)?,
-                    status: row.get(3)?,
-                    tag: row.get(4)?,
-                    due_date: row.get(5)?,
+                    text: row.get(1)?,
+                    status: row.get(2)?,
+                    tag: row.get(3)?,
+                    due_date: row.get(4)?,
                 })
             })
             .unwrap();
@@ -112,9 +105,8 @@ impl DatabaseHandler {
 
     pub fn update_task(&self, id: i32, new_task: &Task) -> rusqlite::Result<usize> {
         self.conn.execute(
-            "UPDATE Tasks SET title = ?1, text = ?2, status = ?3, tag = ?4, due_date = ?5 WHERE id = ?6",
+            "UPDATE Tasks SET text = ?1, status = ?2, tag = ?3, due_date = ?4 WHERE id = ?5",
             params![
-                new_task.title,
                 new_task.text,
                 new_task.status.to_string(),
                 new_task.tag,
@@ -136,7 +128,7 @@ mod tests {
 
     fn setup_single_task() -> (DatabaseHandler, Task) {
         let db_handler = DatabaseHandler::new_in_memory();
-        let expected = Task::new(1, "", "", TaskStatus::Undone, None, None);
+        let expected = Task::new(1, "", TaskStatus::Undone, None, None);
         (db_handler, expected)
     }
 
@@ -146,7 +138,6 @@ mod tests {
         let tasks = vec![
             Task::new(
                 1,
-                "Grocery Shopping",
                 "Buy fruits, vegetables, and bread.",
                 TaskStatus::Undone,
                 None,
@@ -154,7 +145,6 @@ mod tests {
             ),
             Task::new(
                 2,
-                "Car Maintenance",
                 "Change oil and check tire pressure.",
                 TaskStatus::Undone,
                 None,
@@ -162,7 +152,6 @@ mod tests {
             ),
             Task::new(
                 3,
-                "Reading Assignment",
                 "Read chapter 5 of the history book.",
                 TaskStatus::Undone,
                 None,
@@ -170,7 +159,6 @@ mod tests {
             ),
             Task::new(
                 4,
-                "Gym Session",
                 "30 minutes of cardio and weight lifting.",
                 TaskStatus::Undone,
                 None,
@@ -178,7 +166,6 @@ mod tests {
             ),
             Task::new(
                 5,
-                "Cook Dinner",
                 "Try out the new pasta recipe.",
                 TaskStatus::Undone,
                 None,

@@ -1,4 +1,5 @@
 use crate::FromSql;
+use colored::*;
 use std::{fmt::Display, str::FromStr};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -45,18 +46,27 @@ impl FromSql for TaskStatus {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Task {
     pub id: i32,
-    pub title: String,
     pub text: String,
     pub status: TaskStatus,
     pub tag: Option<String>,
     pub due_date: Option<String>,
 }
 
+impl Display for Task {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let id = format!("{}", self.id).bold();
+        let text = match self.status {
+            TaskStatus::Done => format!("~{}~", self.text), // strikethrough effect using '~'
+            _ => self.text.clone(),
+        };
+        write!(f, "{} {}", id, text)
+    }
+}
+
 impl Default for Task {
     fn default() -> Self {
         Self {
             id: 1,
-            title: Default::default(),
             text: Default::default(),
             status: TaskStatus::Undone,
             tag: Default::default(),
@@ -68,7 +78,6 @@ impl Default for Task {
 impl Task {
     pub fn new(
         id: i32,
-        title: &str,
         text: &str,
         status: TaskStatus,
         tag: Option<String>,
@@ -76,7 +85,6 @@ impl Task {
     ) -> Self {
         Task {
             id,
-            title: title.to_string(),
             text: text.to_string(),
             status,
             tag,
