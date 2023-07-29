@@ -116,16 +116,20 @@ mod tests {
     use super::DatabaseHandler;
     use crate::task::{Task, TaskStatus};
 
+    fn setup() -> (DatabaseHandler, Task) {
+        let db_handler = DatabaseHandler::new_in_memory();
+        let expected = Task::new(1, "", "", TaskStatus::Undone, None, None);
+        (db_handler, expected)
+    }
+
     #[test]
     fn should_create_task() {
-        let db_handler = DatabaseHandler::new_in_memory();
-
-        let some_task = Task::new(1, "", "", TaskStatus::Undone, None, None);
-
-        db_handler.create_task(some_task.clone());
+        let (db_handler, expected) = setup();
+        db_handler.create_task(expected.clone());
 
         let tasks = db_handler.read_tasks();
+        let actual = tasks[0].clone();
 
-        assert_eq!(some_task, tasks[0]);
+        assert_eq!(expected, actual);
     }
 }
