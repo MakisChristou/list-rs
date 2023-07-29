@@ -109,6 +109,10 @@ impl DatabaseHandler {
 
         None
     }
+
+    pub fn delete_task(&self, id: i32) -> rusqlite::Result<usize> {
+        self.conn.execute("DELETE FROM Tasks WHERE id = ?1", [id])
+    }
 }
 
 #[cfg(test)]
@@ -116,20 +120,92 @@ mod tests {
     use super::DatabaseHandler;
     use crate::task::{Task, TaskStatus};
 
-    fn setup() -> (DatabaseHandler, Task) {
+    fn setup_single_task() -> (DatabaseHandler, Task) {
         let db_handler = DatabaseHandler::new_in_memory();
         let expected = Task::new(1, "", "", TaskStatus::Undone, None, None);
         (db_handler, expected)
     }
 
+    fn setup_multiple_tasks() -> (DatabaseHandler, Vec<Task>) {
+        let db_handler = DatabaseHandler::new_in_memory();
+
+        let tasks = vec![
+            Task::new(
+                1,
+                "Grocery Shopping",
+                "Buy fruits, vegetables, and bread.",
+                TaskStatus::Undone,
+                None,
+                None,
+            ),
+            Task::new(
+                2,
+                "Car Maintenance",
+                "Change oil and check tire pressure.",
+                TaskStatus::Undone,
+                None,
+                None,
+            ),
+            Task::new(
+                3,
+                "Reading Assignment",
+                "Read chapter 5 of the history book.",
+                TaskStatus::Undone,
+                None,
+                None,
+            ),
+            Task::new(
+                4,
+                "Gym Session",
+                "30 minutes of cardio and weight lifting.",
+                TaskStatus::Undone,
+                None,
+                None,
+            ),
+            Task::new(
+                5,
+                "Cook Dinner",
+                "Try out the new pasta recipe.",
+                TaskStatus::Undone,
+                None,
+                None,
+            ),
+        ];
+
+        (db_handler, tasks)
+    }
+
     #[test]
-    fn should_create_task() {
-        let (db_handler, expected) = setup();
+    fn create_task_should_work() {
+        let (db_handler, expected) = setup_single_task();
         db_handler.create_task(expected.clone());
 
         let tasks = db_handler.read_tasks();
         let actual = tasks[0].clone();
 
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn delete_task_should_work() {
+        let (db_handler, expected) = setup_single_task();
+        db_handler.create_task(expected.clone());
+
+        let _delete_result = db_handler.delete_task(1);
+        let tasks = db_handler.read_tasks();
+
+        assert_eq!(0, tasks.len());
+    }
+
+    #[test]
+    fn create_multiple_tasks_should_work() {
+        let (db_handler, expected) = setup_multiple_tasks();
+
+        for task in &expected {
+            db_handler.create_task(task.clone());
+        }
+
+        let actual = db_handler.read_tasks();
+        assert_eq!(actual, expected);
     }
 }
