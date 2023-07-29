@@ -1,3 +1,4 @@
+use colored::Colorize;
 use rusqlite::{types::FromSql, Result};
 
 mod args;
@@ -7,7 +8,6 @@ mod task;
 use crate::db_handler::DatabaseHandler;
 use crate::task::Task;
 use crate::task::TaskStatus;
-use colored::Colorize;
 
 use clap::{Parser, Subcommand};
 
@@ -37,38 +37,66 @@ enum Commands {
         text: String,
     },
 
-    // Lists a single todo or all
+    /// Lists a single todo or all
     List {
         id: Option<i32>,
     },
 
-    // Set a task to Archived
+    /// List all tasks
+    All {
+    },
+
+    /// List archived tasks
+    Archived {
+    },
+
+    /// Set a task to Archived
     Archive {
         id: i32,
     },
 
-    // Sets a task to done
+    /// Sets a task to done
     Done {
         id: i32,
     },
 
-    // Sets a task to done
+    /// Sets a task to done
     Undone {
         id: i32,
     },
 }
 
-fn print_all_tasks(tasks: &Vec<Task>) {
-    for task in tasks {
-        println!("{}", task.to_string());
+fn print_empty_message_if_needed(tasks: &Vec<Task>) {
+    println!("");
+    if tasks.is_empty() {
+        println!("Todo list is empty. Run {} to add a new task.", "todo-rs add".bold().color("Blue"));
     }
 }
 
+fn print_all_tasks(tasks: &Vec<Task>) {
+    print_empty_message_if_needed(tasks);
+    for task in tasks {
+        println!("{}", task.to_string());
+    }
+    println!("");
+}
+
 fn print_non_archived_tasks(tasks: &Vec<Task>) {
+    print_empty_message_if_needed(tasks);
     for task in tasks.iter().filter(|&x| x.status != TaskStatus::Archived) {
         println!("{}", task.to_string());
     }
+    println!("");
 }
+
+fn print_archived_tasks(tasks: &Vec<Task>) {
+    print_empty_message_if_needed(tasks);
+    for task in tasks.iter().filter(|&x| x.status == TaskStatus::Archived) {
+        println!("{}", task.to_string());
+    }
+    println!("");
+}
+
 
 fn main() -> Result<()> {
     let db_handler = DatabaseHandler::new("tasks.db");
@@ -91,6 +119,12 @@ fn main() -> Result<()> {
         Some(Commands::List { id }) => {
             print_non_archived_tasks(&tasks);
         }
+        Some(Commands::All {}) => {
+            print_all_tasks(&tasks);
+        },
+        Some(Commands::Archived {  }) => {
+            print_archived_tasks(&tasks);
+        },
         Some(Commands::Remove { id }) => match db_handler.delete_task(*id) {
             Ok(_) => {
                 println!("Task {} removed", id);

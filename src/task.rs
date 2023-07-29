@@ -56,12 +56,17 @@ pub struct Task {
 
 impl Display for Task {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let checkbox = match self.status {
+            TaskStatus::Done => "✅",
+            TaskStatus::Archived => "📦",
+            _ => "⌛",
+        };
         let id = format!("{}", self.id).bold();
         let text = match self.status {
             TaskStatus::Done => self.text.strikethrough().to_string(),
             _ => self.text.clone(),
         };
-        write!(f, "{} {}", id, text)
+        write!(f, "{}) {} {}\n", id, checkbox, text.color("Blue"))
     }
 }
 
