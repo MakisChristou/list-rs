@@ -1,4 +1,4 @@
-use rusqlite::{types::FromSql, Connection, Result};
+use rusqlite::{params, Connection};
 
 use crate::task::Task;
 
@@ -110,6 +110,20 @@ impl DatabaseHandler {
         None
     }
 
+    pub fn update_task(&self, id: i32, new_task: &Task) -> rusqlite::Result<usize> {
+        self.conn.execute(
+            "UPDATE Tasks SET title = ?1, text = ?2, status = ?3, tag = ?4, due_date = ?5 WHERE id = ?6",
+            params![
+                new_task.title,
+                new_task.text,
+                new_task.status.to_string(),
+                new_task.tag,
+                new_task.due_date,
+                id
+            ],
+        )
+    }
+
     pub fn delete_task(&self, id: i32) -> rusqlite::Result<usize> {
         self.conn.execute("DELETE FROM Tasks WHERE id = ?1", [id])
     }
@@ -191,7 +205,7 @@ mod tests {
         let (db_handler, expected) = setup_single_task();
         db_handler.create_task(expected.clone());
 
-        let _delete_result = db_handler.delete_task(1);
+        let _ = db_handler.delete_task(1);
         let tasks = db_handler.read_tasks();
 
         assert_eq!(0, tasks.len());
@@ -206,6 +220,22 @@ mod tests {
         }
 
         let actual = db_handler.read_tasks();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn update_task_should_work() {
+        let (db_handler, mut expected) = setup_multiple_tasks();
+
+        for task in &expected {
+            db_handler.create_task(task.clone());
+        }
+
+        let _ = db_handler.update_task(1, &Task::default());
+
+        let actual = db_handler.read_tasks();
+        expected[0] = Task::default();
+
         assert_eq!(actual, expected);
     }
 }

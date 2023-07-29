@@ -55,7 +55,7 @@ pub struct Task {
 impl Default for Task {
     fn default() -> Self {
         Self {
-            id: Default::default(),
+            id: 1,
             title: Default::default(),
             text: Default::default(),
             status: TaskStatus::Undone,
