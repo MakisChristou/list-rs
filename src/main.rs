@@ -62,7 +62,9 @@ fn main() -> Result<()> {
             }
         },
         Some(Commands::Search { content }) => {
-            print_tasks(&tasks, |task| task.text.contains(content));
+            print_tasks(&tasks, |task| {
+                task.text.to_lowercase().contains(&content.to_lowercase())
+            });
         }
         Some(Commands::Update { id, text }) => {
             let task = db_handler.read_task(*id);
