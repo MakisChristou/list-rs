@@ -1,7 +1,7 @@
 use crate::FromSql;
 use std::{fmt::Display, str::FromStr};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TaskStatus {
     Done,
     Undone,
@@ -42,7 +42,7 @@ impl FromSql for TaskStatus {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Task {
     pub id: i32,
     pub title: String,
@@ -61,6 +61,26 @@ impl Default for Task {
             status: TaskStatus::Undone,
             tag: Default::default(),
             due_date: Default::default(),
+        }
+    }
+}
+
+impl Task {
+    pub fn new(
+        id: i32,
+        title: &str,
+        text: &str,
+        status: TaskStatus,
+        tag: Option<String>,
+        due_date: Option<String>,
+    ) -> Self {
+        Task {
+            id,
+            title: title.to_string(),
+            text: text.to_string(),
+            status,
+            tag,
+            due_date,
         }
     }
 }

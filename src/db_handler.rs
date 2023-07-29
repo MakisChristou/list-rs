@@ -26,6 +26,25 @@ impl DatabaseHandler {
         DatabaseHandler { conn }
     }
 
+    pub fn new_in_memory() -> Self {
+        let conn = Connection::open_in_memory().unwrap();
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS Tasks (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                title       TEXT NOT NULL,
+                text        TEXT NOT NULL,
+                status      TEXT NOT NULL,
+                tag         TEXT,
+                due_date    TEXT
+            )",
+            (), // empty list of parameters.
+        )
+        .unwrap();
+
+        DatabaseHandler { conn }
+    }
+
     pub fn create_task(&self, task: Task) {
         self.conn.execute(
             "INSERT INTO Tasks (title, text, status, tag, due_date) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -89,5 +108,24 @@ impl DatabaseHandler {
         }
 
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DatabaseHandler;
+    use crate::task::{Task, TaskStatus};
+
+    #[test]
+    fn should_create_task() {
+        let db_handler = DatabaseHandler::new_in_memory();
+
+        let some_task = Task::new(1, "", "", TaskStatus::Undone, None, None);
+
+        db_handler.create_task(some_task.clone());
+
+        let tasks = db_handler.read_tasks();
+
+        assert_eq!(some_task, tasks[0]);
     }
 }
