@@ -19,11 +19,15 @@ fn main() -> Result<()> {
         due_date: None,
     };
 
-    db_handler.create_task(default_task);
+    // db_handler.create_task(default_task);
+
+    let task = db_handler.read_task(0);
+    println!("{:?}", task);
 
     let tasks = db_handler.read_tasks();
-
-    println!("All Tasks: {:?}", tasks);
+    for task in tasks {
+        println!("{:?}", task);
+    }
 
     Ok(())
 }

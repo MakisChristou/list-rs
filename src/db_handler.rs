@@ -65,4 +65,29 @@ impl DatabaseHandler {
 
         tasks
     }
+
+    pub fn read_task(&self, id: i32) -> Option<Task> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, title, text, status, tag, due_date FROM Tasks WHERE id = ?1")
+            .unwrap();
+        let task_iter = stmt
+            .query_map([id], |row| {
+                Ok(Task {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    text: row.get(2)?,
+                    status: row.get(3)?,
+                    tag: row.get(4)?,
+                    due_date: row.get(5)?,
+                })
+            })
+            .unwrap();
+
+        for task in task_iter {
+            return Some(task.unwrap());
+        }
+
+        None
+    }
 }
