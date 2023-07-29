@@ -56,7 +56,7 @@ impl Display for Task {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let id = format!("{}", self.id).bold();
         let text = match self.status {
-            TaskStatus::Done => format!("~{}~", self.text), // strikethrough effect using '~'
+            TaskStatus::Done => self.text.strikethrough().to_string(),
             _ => self.text.clone(),
         };
         write!(f, "{} {}", id, text)
