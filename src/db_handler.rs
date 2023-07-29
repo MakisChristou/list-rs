@@ -14,7 +14,8 @@ impl DatabaseHandler {
                 text        TEXT NOT NULL,
                 status      TEXT NOT NULL,
                 tag         TEXT,
-                due_date    TEXT
+                due_date    TEXT,
+                created_at  TEXT
             )",
             (), // empty list of parameters.
         )
@@ -32,7 +33,8 @@ impl DatabaseHandler {
                 text        TEXT NOT NULL,
                 status      TEXT NOT NULL,
                 tag         TEXT,
-                due_date    TEXT
+                due_date    TEXT,
+                created_at  TEXT
             )",
             (), // empty list of parameters.
         )
@@ -43,12 +45,13 @@ impl DatabaseHandler {
 
     pub fn create_task(&self, task: Task) -> rusqlite::Result<usize> {
         self.conn.execute(
-            "INSERT INTO Tasks (text, status, tag, due_date) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT INTO Tasks (text, status, tag, due_date, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
             (
                 &task.text,
                 &task.status.to_string(),
                 &task.tag,
                 &task.due_date,
+                &task.created_at,
             ),
         )
     }
@@ -56,7 +59,7 @@ impl DatabaseHandler {
     pub fn read_tasks(&self) -> Vec<Task> {
         let mut stmt = self
             .conn
-            .prepare("SELECT id, text, status, tag, due_date FROM Tasks")
+            .prepare("SELECT id, text, status, tag, due_date, created_at FROM Tasks")
             .unwrap();
         let task_iter = stmt
             .query_map([], |row| {
@@ -66,6 +69,7 @@ impl DatabaseHandler {
                     status: row.get(2)?,
                     tag: row.get(3)?,
                     due_date: row.get(4)?,
+                    created_at: row.get(5)?,
                 })
             })
             .unwrap();
@@ -82,7 +86,7 @@ impl DatabaseHandler {
     pub fn read_task(&self, id: i32) -> Option<Task> {
         let mut stmt = self
             .conn
-            .prepare("SELECT id, text, status, tag, due_date FROM Tasks WHERE id = ?1")
+            .prepare("SELECT id, text, status, tag, due_date, created_at FROM Tasks WHERE id = ?1")
             .unwrap();
         let task_iter = stmt
             .query_map([id], |row| {
@@ -92,6 +96,7 @@ impl DatabaseHandler {
                     status: row.get(2)?,
                     tag: row.get(3)?,
                     due_date: row.get(4)?,
+                    created_at: row.get(5)?,
                 })
             })
             .unwrap();
@@ -105,12 +110,13 @@ impl DatabaseHandler {
 
     pub fn update_task(&self, id: i32, new_task: &Task) -> rusqlite::Result<usize> {
         self.conn.execute(
-            "UPDATE Tasks SET text = ?1, status = ?2, tag = ?3, due_date = ?4 WHERE id = ?5",
+            "UPDATE Tasks SET text = ?1, status = ?2, tag = ?3, due_date = ?4, created_at = ?5 WHERE id = ?6",
             params![
                 new_task.text,
                 new_task.status.to_string(),
                 new_task.tag,
                 new_task.due_date,
+                new_task.created_at,
                 id
             ],
         )

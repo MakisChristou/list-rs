@@ -1,4 +1,5 @@
 use crate::FromSql;
+use chrono::NaiveDateTime;
 use colored::*;
 use std::{fmt::Display, str::FromStr};
 
@@ -50,6 +51,7 @@ pub struct Task {
     pub status: TaskStatus,
     pub tag: Option<String>,
     pub due_date: Option<String>,
+    pub created_at: NaiveDateTime,
 }
 
 impl Display for Task {
@@ -71,6 +73,7 @@ impl Default for Task {
             status: TaskStatus::Undone,
             tag: Default::default(),
             due_date: Default::default(),
+            created_at: Default::default(),
         }
     }
 }
@@ -89,6 +92,7 @@ impl Task {
             status,
             tag,
             due_date,
+            created_at: chrono::Local::now().naive_local(),
         }
     }
 }

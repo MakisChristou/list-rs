@@ -7,6 +7,7 @@ mod task;
 use crate::db_handler::DatabaseHandler;
 use crate::task::Task;
 use crate::task::TaskStatus;
+use colored::Colorize;
 
 use clap::{Parser, Subcommand};
 
@@ -105,8 +106,12 @@ fn main() -> Result<()> {
                 Some(mut task) => {
                     task.text = (*text).clone();
                     match db_handler.update_task(*id, &task) {
-                        Ok(_) => {println!("Task {} updated", id)},
-                        Err(e) => {println!("Error updating task {}", e)}
+                        Ok(_) => {
+                            println!("Task {} updated", id)
+                        }
+                        Err(e) => {
+                            println!("Error updating task {}", e)
+                        }
                     }
                 }
                 None => {
