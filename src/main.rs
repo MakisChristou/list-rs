@@ -22,81 +22,47 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Adds a todo
-    Add {
-        text: String,
-    },
+    Add { text: String },
 
     /// Removes a todo
-    Remove {
-        id: i32,
-    },
+    Remove { id: i32 },
 
     /// Updates a todo with a given id
-    Update {
-        id: i32,
-        text: String,
-    },
+    Update { id: i32, text: String },
 
     /// Lists a single todo or all
-    List {
-        id: Option<i32>,
-    },
+    List { id: Option<i32> },
 
     /// List all tasks
-    All {
-    },
+    All {},
 
     /// List archived tasks
-    Archived {
-    },
+    Archived {},
 
     /// Set a task to Archived
-    Archive {
-        id: i32,
-    },
+    Archive { id: i32 },
 
     /// Sets a task to done
-    Done {
-        id: i32,
-    },
+    Done { id: i32 },
 
     /// Sets a task to done
-    Undone {
-        id: i32,
-    },
+    Undone { id: i32 },
 }
 
-fn print_empty_message_if_needed(tasks: &Vec<Task>) {
+fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F) {
     println!("");
     if tasks.is_empty() {
-        println!("Todo list is empty. Run {} to add a new task.", "todo-rs add".bold().color("Blue"));
+        println!(
+            "Todo list is empty. Run {} to add a new task.",
+            "todo-rs add".bold().color("Blue")
+        );
+    } else {
+        for task in tasks.iter().filter(|&x| filter(x)) {
+            println!("{}", task.to_string());
+        }
+        println!("");
     }
 }
-
-fn print_all_tasks(tasks: &Vec<Task>) {
-    print_empty_message_if_needed(tasks);
-    for task in tasks {
-        println!("{}", task.to_string());
-    }
-    println!("");
-}
-
-fn print_non_archived_tasks(tasks: &Vec<Task>) {
-    print_empty_message_if_needed(tasks);
-    for task in tasks.iter().filter(|&x| x.status != TaskStatus::Archived) {
-        println!("{}", task.to_string());
-    }
-    println!("");
-}
-
-fn print_archived_tasks(tasks: &Vec<Task>) {
-    print_empty_message_if_needed(tasks);
-    for task in tasks.iter().filter(|&x| x.status == TaskStatus::Archived) {
-        println!("{}", task.to_string());
-    }
-    println!("");
-}
-
 
 fn main() -> Result<()> {
     let db_handler = DatabaseHandler::new("tasks.db");
@@ -117,14 +83,14 @@ fn main() -> Result<()> {
             }
         }
         Some(Commands::List { id }) => {
-            print_non_archived_tasks(&tasks);
+            print_tasks(&tasks, |task| task.status != TaskStatus::Archived);
         }
         Some(Commands::All {}) => {
-            print_all_tasks(&tasks);
-        },
-        Some(Commands::Archived {  }) => {
-            print_archived_tasks(&tasks);
-        },
+            print_tasks(&tasks, |_| true);
+        }
+        Some(Commands::Archived {}) => {
+            print_tasks(&tasks, |task| task.status == TaskStatus::Archived);
+        }
         Some(Commands::Remove { id }) => match db_handler.delete_task(*id) {
             Ok(_) => {
                 println!("Task {} removed", id);
@@ -214,7 +180,7 @@ fn main() -> Result<()> {
             }
         }
         None => {
-            print_non_archived_tasks(&tasks);
+            print_tasks(&tasks, |task| task.status != TaskStatus::Archived);
         }
     }
 
