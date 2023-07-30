@@ -10,6 +10,8 @@ Run todo-rs add to add a new task.
 Run todo-rs --help to get all commands
 ```
 
+[![asciicast](https://asciinema.org/a/J0gF6o0Vh2MJbCcXYwg9WiTFu.svg)](https://asciinema.org/a/J0gF6o0Vh2MJbCcXYwg9WiTFu)
+
 ## Example Usage 
 
 ### Add task
@@ -87,9 +89,6 @@ $ todo-rs archived
 - Search a task based on its content
 
 ## Future Features
-- Search a task based on date created as well
-- Clear all tasks, archived tasks, done tasks
-- Prettier printing
 - Implement task due dates
 - Implement task tags (catregorization)
 
