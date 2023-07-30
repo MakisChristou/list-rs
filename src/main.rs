@@ -18,17 +18,18 @@ fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F, should_show_a
         .collect();
     if tasks.is_empty() {
         println!(
-            "task list is empty. Run {} to add a new task.",
-            "task-rs add".bold().color("Blue")
+            "Welcome to todo-rs, a cli todo app written in Rust 🦀!\nTask list is empty. \nRun {} to add a new task. \nRun {} to get all commands",
+            "todo-rs add".bold().color("Blue"),
+            "todo-rs --help".bold().color("Blue")
         );
     } else if undone_tasks.len() == 0 && !should_show_archived {
-        println!("Great, no pending tasks 🎉 \n");
+        println!("Great, no pending tasks 🎉");
     } else {
         for task in tasks.iter().filter(|&x| filter(x)) {
             println!("{}", task.to_string());
         }
-        println!("");
     }
+    println!("");
 }
 
 fn main() -> Result<()> {

@@ -47,8 +47,6 @@ impl DatabaseHandler {
             id
         );
 
-        println!("update_undo_query: {}", undo_query);
-
         self.conn.execute(
             "INSERT INTO History (command, created_at) VALUES (?1, ?2)",
             [&undo_query, &chrono::Local::now().to_string()],
@@ -85,8 +83,6 @@ impl DatabaseHandler {
             },
             &task.created_at,
         );
-
-        println!("delete_undo_query {}", &undo_query);
 
         self.conn.execute(
             "INSERT INTO History (command, created_at) VALUES (?1, ?2)",
@@ -348,6 +344,7 @@ mod tests {
     #[test]
     fn undo_create_should_work() {
         let (db_handler, expected) = setup_single_task();
+        
         db_handler.create_task(expected.clone());
         db_handler.undo();
 
@@ -360,10 +357,9 @@ mod tests {
     #[test]
     fn undo_delete_should_work() {
         let (db_handler, expected) = setup_single_task();
+        
         db_handler.create_task(expected.clone());
-
         db_handler.delete_task(1);
-
         db_handler.undo();
 
         let actual = db_handler.read_tasks();

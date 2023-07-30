@@ -13,7 +13,7 @@ pub enum Commands {
     /// Adds a task
     Add { text: String },
 
-    /// Removes a task
+    /// Removes a task with a given id
     Remove { id: i32 },
 
     /// Updates a task with a given id
@@ -28,13 +28,13 @@ pub enum Commands {
     /// List archived tasks
     Archived {},
 
-    /// Set a task to Archived
+    /// Sets a task with a given id to Archived
     Archive { id: i32 },
 
-    /// Sets a task to Done
+    /// Sets a task with a given id to Done
     Done { id: i32 },
 
-    /// Sets a task to Undone
+    /// Sets a task with a given id to Undone
     Undone { id: i32 },
 
     /// Search for a task by its contents

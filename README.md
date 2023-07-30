@@ -26,14 +26,14 @@ Usage: todo-rs [COMMAND]
 
 Commands:
   add       Adds a task
-  remove    Removes a task
+  remove    Removes a task with a given id
   update    Updates a task with a given id
   list      Lists a single task or all
   all       List all tasks
   archived  List archived tasks
-  archive   Set a task to Archived
-  done      Sets a task to Done
-  undone    Sets a task to Undone
+  archive   Sets a task with a given id to Archived
+  done      Sets a task with a given id to Done
+  undone    Sets a task with a given id to Undone
   search    Search for a task by its contents
   undo      Revert last change
   help      Print this message or the help of the given subcommand(s)
