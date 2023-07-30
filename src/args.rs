@@ -42,6 +42,9 @@ pub enum Commands {
 
     /// Revert last change
     Undo {},
+
+    /// Redo last change
+    Redo {},
 }
 
 impl Cli {

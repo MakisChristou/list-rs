@@ -100,4 +100,21 @@ impl Task {
             created_at: chrono::Local::now().naive_local(),
         }
     }
+    pub fn new_with_created_at(
+        id: i32,
+        text: &str,
+        status: TaskStatus,
+        tag: Option<String>,
+        due_date: Option<String>,
+        created_at: NaiveDateTime,
+    ) -> Self {
+        Task {
+            id,
+            text: text.to_string(),
+            status,
+            tag,
+            due_date,
+            created_at,
+        }
+    }
 }

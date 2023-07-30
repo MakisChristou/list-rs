@@ -161,6 +161,12 @@ fn main() -> Result<()> {
                 println!("Error undoing task {}", e)
             }
         },
+        Some(Commands::Redo {}) => match db_handler.redo() {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Error redoing task {}", e)
+            }
+        },
         None => {
             print_tasks(&tasks, |task| task.status != TaskStatus::Archived, false);
         }

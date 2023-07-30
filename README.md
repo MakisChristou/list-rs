@@ -5,11 +5,11 @@ A simple clli todo app written in Rust.
 - CRUD Operations: Add, Delete, Update, and List all tasks.
 - Option to mark tasks as "Done," "Undone," and "Archived."
 - Task list persistent on disk using a database
-- Undo operations
+- Undo/Redo operations
 - Search a task based on its content
 
 ## Future Features
-- Redo operations
+- ~~Redo operations~~
 - Search a task based on date created as well
 - Clear all tasks, archived tasks, done tasks
 - Pretty printing 
@@ -36,6 +36,7 @@ Commands:
   undone    Sets a task with a given id to Undone
   search    Search for a task by its contents
   undo      Revert last change
+  redo      Redo last change
   help      Print this message or the help of the given subcommand(s)
 
 Options:
