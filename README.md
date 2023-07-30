@@ -80,7 +80,16 @@ $ todo-rs archived
 4) 📦 Take vitamins
 ```
 
-## Features
+### Search a task by its contents
+
+```bash
+$ todo-rs search "Hello"   
+
+6) ⌛ Hello World
+5) ⌛ Hello
+```
+
+## Functional Requirements
 - CRUD Operations: Add, Delete, Update, and List all tasks.
 - Automatic sorting by date created
 - Option to mark tasks as "Done," "Undone," and "Archived."
@@ -88,13 +97,19 @@ $ todo-rs archived
 - Undo/Redo operations with infinite history
 - Search a task based on its content
 
-## Future Features
+## Future Work
 - Implement task due dates
 - Implement task tags (catregorization)
+- Interactive mode
 
 ## Building 
 ```bash
-cargo build --release
+cargo b --release
+```
+
+## Run tests
+```bash
+cargo t
 ```
 
 ## Cli Arguments
