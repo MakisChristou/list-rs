@@ -10,13 +10,19 @@ use crate::db_handler::DatabaseHandler;
 use crate::task::Task;
 use crate::task::TaskStatus;
 
-fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F) {
+fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F, should_show_archived: bool) {
     println!("");
+    let undone_tasks: Vec<_> = tasks
+        .iter()
+        .filter(|x| x.status == TaskStatus::Undone)
+        .collect();
     if tasks.is_empty() {
         println!(
             "task list is empty. Run {} to add a new task.",
             "task-rs add".bold().color("Blue")
         );
+    } else if undone_tasks.len() == 0 && !should_show_archived {
+        println!("Great, no pending tasks 🎉 \n");
     } else {
         for task in tasks.iter().filter(|&x| filter(x)) {
             println!("{}", task.to_string());
@@ -45,13 +51,13 @@ fn main() -> Result<()> {
             }
         }
         Some(Commands::List { id }) => {
-            print_tasks(&tasks, |task| task.status != TaskStatus::Archived);
+            print_tasks(&tasks, |task| task.status != TaskStatus::Archived, false);
         }
         Some(Commands::All {}) => {
-            print_tasks(&tasks, |_| true);
+            print_tasks(&tasks, |_| true, true);
         }
         Some(Commands::Archived {}) => {
-            print_tasks(&tasks, |task| task.status == TaskStatus::Archived);
+            print_tasks(&tasks, |task| task.status == TaskStatus::Archived, true);
         }
         Some(Commands::Remove { id }) => match db_handler.delete_task(*id) {
             Ok(_) => {
@@ -62,9 +68,11 @@ fn main() -> Result<()> {
             }
         },
         Some(Commands::Search { content }) => {
-            print_tasks(&tasks, |task| {
-                task.text.to_lowercase().contains(&content.to_lowercase())
-            });
+            print_tasks(
+                &tasks,
+                |task| task.text.to_lowercase().contains(&content.to_lowercase()),
+                true,
+            );
         }
         Some(Commands::Update { id, text }) => {
             let task = db_handler.read_task(*id);
@@ -153,7 +161,7 @@ fn main() -> Result<()> {
             }
         },
         None => {
-            print_tasks(&tasks, |task| task.status != TaskStatus::Archived);
+            print_tasks(&tasks, |task| task.status != TaskStatus::Archived, false);
         }
     }
 
