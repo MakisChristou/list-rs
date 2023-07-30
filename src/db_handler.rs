@@ -1,13 +1,18 @@
-use std::str::FromStr;
-
 use crate::task::{Task, TaskStatus};
-use chrono::{NaiveDate, NaiveDateTime};
-use rusqlite::{params, Connection, Error};
+use chrono::NaiveDateTime;
+use rusqlite::{params, Connection};
 pub struct DatabaseHandler {
     pub conn: Connection,
 }
 
 impl DatabaseHandler {
+    pub fn new(database_path: &str) -> Self {
+        let conn = Connection::open(database_path).unwrap();
+        DatabaseHandler::create_tables_if_not_exist(&conn);
+
+        DatabaseHandler { conn }
+    }
+
     fn create_tables_if_not_exist(conn: &Connection) {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS Tasks (
@@ -49,160 +54,7 @@ impl DatabaseHandler {
         .unwrap();
     }
 
-    fn push_update_to_undo_history(
-        &self,
-        id: i32,
-        previous_task: Task,
-        new_task: Task,
-    ) -> rusqlite::Result<()> {
-        let undo_query = format!(
-            "UPDATE Tasks SET text = '{}', status = '{}', tag = {}, due_date = {}, created_at = '{}' WHERE id = {}",
-            previous_task.text,
-            previous_task.status.to_string(),
-            match &previous_task.tag {
-                Some(t) => format!("'{}'", t),
-                None => "NULL".to_string(),
-            },
-            match &previous_task.due_date {
-                Some(d) => format!("'{}'", d),
-                None => "NULL".to_string(),
-            },
-            previous_task.created_at,
-            id
-        );
-
-        self.conn.execute(
-            "INSERT INTO UndoHistory (command, created_at, task_id, task_text, task_status, task_tag, task_due_date, task_created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            (&undo_query, chrono::Local::now().to_string(), new_task.id, new_task.text, new_task.status.to_string(), new_task.tag, new_task.due_date, new_task.created_at),
-        )?;
-
-        Ok(())
-    }
-
-    fn push_create_to_undo_history(&self, task: Task) -> rusqlite::Result<()> {
-        // Add the opposite operation to the UndoHistory
-        let undo_query = "DELETE FROM Tasks WHERE id = (SELECT MAX(id) FROM Tasks)";
-        self.conn.execute(
-            "INSERT INTO UndoHistory (command, created_at, task_id, task_text, task_status, task_tag, task_due_date, task_created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            (&undo_query, chrono::Local::now().to_string(), task.id, task.text, task.status.to_string(), task.tag, task.due_date, task.created_at),
-        )?;
-
-        Ok(())
-    }
-
-    fn push_delete_to_undo_history(&self, task: Task, id: i32) -> rusqlite::Result<()> {
-        // Add the opposite operation to the UndoHistory
-        let undo_query = format!(
-            "INSERT INTO Tasks (id, text, status, tag, due_date, created_at) VALUES ({}, '{}', '{}', {}, {}, '{}')",
-            &task.id,
-            &task.text,
-            &task.status.to_string(),
-            match &task.tag {
-                Some(t) => format!("'{}'", t),
-                None => "NULL".to_string(),
-            },
-            match &task.due_date {
-                Some(d) => format!("'{}'", d),
-                None => "NULL".to_string(),
-            },
-            &task.created_at,
-        );
-
-        self.conn.execute(
-            "INSERT INTO UndoHistory (command, created_at, task_id, task_text, task_status, task_tag, task_due_date, task_created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            (&undo_query, chrono::Local::now().to_string(), task.id, task.text, task.status.to_string(), task.tag, task.due_date, task.created_at),
-        )?;
-
-        Ok(())
-    }
-
-    fn update_redo_table(&self, undo_command: &str, task: Task) -> rusqlite::Result<()> {
-        if undo_command.starts_with("INSERT") {
-            // opposite is DELETE
-            self.push_delete_to_redo_history(task)?;
-        } else if undo_command.starts_with("DELETE") {
-            // Opposite is INSERT
-            self.push_create_to_redo_history(task)?;
-        } else if undo_command.starts_with("UPDATE") {
-            // Opposite is UPDATE
-            self.push_update_to_redo_history(task)?;
-        } else {
-            panic!("Invalid undo command: {}", undo_command);
-        }
-
-        Ok(())
-    }
-
-    fn push_delete_to_redo_history(&self, task: Task) -> rusqlite::Result<()> {
-        // Add the opposite operation to the RedoHistory
-        let redo_query = format!("DELETE FROM Tasks WHERE id = {}", task.id);
-
-        self.conn.execute(
-            "INSERT INTO RedoHistory (command, created_at) VALUES (?1, ?2)",
-            (&redo_query, chrono::Local::now().to_string()),
-        )?;
-
-        Ok(())
-    }
-
-    fn push_create_to_redo_history(&self, task: Task) -> rusqlite::Result<()> {
-        // Add the opposite operation to the RedoHistory
-        let undo_query = format!(
-            "INSERT INTO Tasks (id, text, status, tag, due_date, created_at) VALUES ({}, '{}', '{}', {}, {}, '{}')",
-            &task.id,
-            &task.text,
-            &task.status.to_string(),
-            match &task.tag {
-                Some(t) => format!("'{}'", t),
-                None => "NULL".to_string(),
-            },
-            match &task.due_date {
-                Some(d) => format!("'{}'", d),
-                None => "NULL".to_string(),
-            },
-            &task.created_at,
-        );
-
-        self.conn.execute(
-            "INSERT INTO RedoHistory (command, created_at) VALUES (?1, ?2)",
-            (&undo_query, chrono::Local::now().to_string()),
-        )?;
-
-        Ok(())
-    }
-
-    fn push_update_to_redo_history(&self, task: Task) -> rusqlite::Result<()> {
-        let redo_query = format!(
-            "UPDATE Tasks SET text = '{}', status = '{}', tag = {}, due_date = {}, created_at = '{}' WHERE id = {}",
-            task.text,
-            task.status.to_string(),
-            match &task.tag {
-                Some(t) => format!("'{}'", t),
-                None => "NULL".to_string(),
-            },
-            match &task.due_date {
-                Some(d) => format!("'{}'", d),
-                None => "NULL".to_string(),
-            },
-            task.created_at,
-            task.id
-        );
-
-        self.conn.execute(
-            "INSERT INTO RedoHistory (command, created_at) VALUES (?1, ?2)",
-            (&redo_query, chrono::Local::now().to_string()),
-        )?;
-
-        Ok(())
-    }
-
-    pub fn new(database_path: &str) -> Self {
-        let conn = Connection::open(database_path).unwrap();
-        DatabaseHandler::create_tables_if_not_exist(&conn);
-
-        DatabaseHandler { conn }
-    }
-
+    // For testing only
     pub fn new_in_memory() -> Self {
         let conn = Connection::open_in_memory().unwrap();
         DatabaseHandler::create_tables_if_not_exist(&conn);
@@ -379,6 +231,73 @@ impl DatabaseHandler {
         Ok(())
     }
 
+    fn push_update_to_undo_history(
+        &self,
+        id: i32,
+        previous_task: Task,
+        new_task: Task,
+    ) -> rusqlite::Result<()> {
+        let undo_query = format!(
+            "UPDATE Tasks SET text = '{}', status = '{}', tag = {}, due_date = {}, created_at = '{}' WHERE id = {}",
+            previous_task.text,
+            previous_task.status.to_string(),
+            match &previous_task.tag {
+                Some(t) => format!("'{}'", t),
+                None => "NULL".to_string(),
+            },
+            match &previous_task.due_date {
+                Some(d) => format!("'{}'", d),
+                None => "NULL".to_string(),
+            },
+            previous_task.created_at,
+            id
+        );
+
+        self.conn.execute(
+            "INSERT INTO UndoHistory (command, created_at, task_id, task_text, task_status, task_tag, task_due_date, task_created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            (&undo_query, chrono::Local::now().to_string(), new_task.id, new_task.text, new_task.status.to_string(), new_task.tag, new_task.due_date, new_task.created_at),
+        )?;
+
+        Ok(())
+    }
+
+    fn push_create_to_undo_history(&self, task: Task) -> rusqlite::Result<()> {
+        // Add the opposite operation to the UndoHistory
+        let undo_query = "DELETE FROM Tasks WHERE id = (SELECT MAX(id) FROM Tasks)";
+        self.conn.execute(
+            "INSERT INTO UndoHistory (command, created_at, task_id, task_text, task_status, task_tag, task_due_date, task_created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            (&undo_query, chrono::Local::now().to_string(), task.id, task.text, task.status.to_string(), task.tag, task.due_date, task.created_at),
+        )?;
+
+        Ok(())
+    }
+
+    fn push_delete_to_undo_history(&self, task: Task, id: i32) -> rusqlite::Result<()> {
+        // Add the opposite operation to the UndoHistory
+        let undo_query = format!(
+            "INSERT INTO Tasks (id, text, status, tag, due_date, created_at) VALUES ({}, '{}', '{}', {}, {}, '{}')",
+            &task.id,
+            &task.text,
+            &task.status.to_string(),
+            match &task.tag {
+                Some(t) => format!("'{}'", t),
+                None => "NULL".to_string(),
+            },
+            match &task.due_date {
+                Some(d) => format!("'{}'", d),
+                None => "NULL".to_string(),
+            },
+            &task.created_at,
+        );
+
+        self.conn.execute(
+            "INSERT INTO UndoHistory (command, created_at, task_id, task_text, task_status, task_tag, task_due_date, task_created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            (&undo_query, chrono::Local::now().to_string(), task.id, task.text, task.status.to_string(), task.tag, task.due_date, task.created_at),
+        )?;
+
+        Ok(())
+    }
+
     pub fn redo(&self) -> rusqlite::Result<()> {
         let mut stmt = self
             .conn
@@ -405,6 +324,86 @@ impl DatabaseHandler {
                 }
             }
         }
+
+        Ok(())
+    }
+
+    fn update_redo_table(&self, undo_command: &str, task: Task) -> rusqlite::Result<()> {
+        if undo_command.starts_with("INSERT") {
+            // opposite is DELETE
+            self.push_delete_to_redo_history(task)?;
+        } else if undo_command.starts_with("DELETE") {
+            // Opposite is INSERT
+            self.push_create_to_redo_history(task)?;
+        } else if undo_command.starts_with("UPDATE") {
+            // Opposite is UPDATE
+            self.push_update_to_redo_history(task)?;
+        } else {
+            panic!("Invalid undo command: {}", undo_command);
+        }
+
+        Ok(())
+    }
+
+    fn push_delete_to_redo_history(&self, task: Task) -> rusqlite::Result<()> {
+        // Add the opposite operation to the RedoHistory
+        let redo_query = format!("DELETE FROM Tasks WHERE id = {}", task.id);
+
+        self.conn.execute(
+            "INSERT INTO RedoHistory (command, created_at) VALUES (?1, ?2)",
+            (&redo_query, chrono::Local::now().to_string()),
+        )?;
+
+        Ok(())
+    }
+
+    fn push_create_to_redo_history(&self, task: Task) -> rusqlite::Result<()> {
+        // Add the opposite operation to the RedoHistory
+        let undo_query = format!(
+            "INSERT INTO Tasks (id, text, status, tag, due_date, created_at) VALUES ({}, '{}', '{}', {}, {}, '{}')",
+            &task.id,
+            &task.text,
+            &task.status.to_string(),
+            match &task.tag {
+                Some(t) => format!("'{}'", t),
+                None => "NULL".to_string(),
+            },
+            match &task.due_date {
+                Some(d) => format!("'{}'", d),
+                None => "NULL".to_string(),
+            },
+            &task.created_at,
+        );
+
+        self.conn.execute(
+            "INSERT INTO RedoHistory (command, created_at) VALUES (?1, ?2)",
+            (&undo_query, chrono::Local::now().to_string()),
+        )?;
+
+        Ok(())
+    }
+
+    fn push_update_to_redo_history(&self, task: Task) -> rusqlite::Result<()> {
+        let redo_query = format!(
+            "UPDATE Tasks SET text = '{}', status = '{}', tag = {}, due_date = {}, created_at = '{}' WHERE id = {}",
+            task.text,
+            task.status.to_string(),
+            match &task.tag {
+                Some(t) => format!("'{}'", t),
+                None => "NULL".to_string(),
+            },
+            match &task.due_date {
+                Some(d) => format!("'{}'", d),
+                None => "NULL".to_string(),
+            },
+            task.created_at,
+            task.id
+        );
+
+        self.conn.execute(
+            "INSERT INTO RedoHistory (command, created_at) VALUES (?1, ?2)",
+            (&redo_query, chrono::Local::now().to_string()),
+        )?;
 
         Ok(())
     }
@@ -556,5 +555,62 @@ mod tests {
         let actual = db_handler.read_tasks();
 
         assert_eq!(vec![expected], actual);
+    }
+
+    #[test]
+    fn redo_create_should_work() {
+        let (db_handler, expected) = setup_single_task();
+
+        db_handler.create_task(expected.clone());
+        db_handler.undo();
+        db_handler.redo();
+
+        let actual = db_handler.read_tasks();
+
+        assert_eq!(vec![expected], actual);
+    }
+
+    #[test]
+    fn redo_update_should_work() {
+        let (db_handler, expected) = setup_single_task();
+        db_handler.create_task(expected.clone());
+
+        let now = chrono::Local::now().naive_local();
+
+        db_handler.update_task(
+            1,
+            &Task::new_with_created_at(1, "An updated task", TaskStatus::Archived, None, None, now),
+        );
+
+        db_handler.undo();
+        db_handler.redo();
+
+        let actual = db_handler.read_tasks();
+
+        assert_eq!(
+            vec![Task::new_with_created_at(
+                1,
+                "An updated task",
+                TaskStatus::Archived,
+                None,
+                None,
+                now
+            )],
+            actual
+        );
+    }
+
+    #[test]
+    fn redo_delete_should_work() {
+        let (db_handler, expected) = setup_single_task();
+
+        db_handler.create_task(expected.clone());
+        db_handler.delete_task(1);
+        db_handler.undo();
+        db_handler.redo();
+
+        let actual = db_handler.read_tasks();
+
+        assert_eq!(0, actual.len());
     }
 }
