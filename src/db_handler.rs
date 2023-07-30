@@ -32,14 +32,22 @@ impl DatabaseHandler {
 
     fn push_update_to_undo_history(&self, id: i32, current_task: Task) -> rusqlite::Result<()> {
         let undo_query = format!(
-            "UPDATE Tasks SET text = '{}', status = '{}', tag = '{}', due_date = '{}', created_at = '{}' WHERE id = {}",
+            "UPDATE Tasks SET text = '{}', status = '{}', tag = {}, due_date = {}, created_at = '{}' WHERE id = {}",
             current_task.text,
             current_task.status.to_string(),
-            current_task.tag.unwrap_or_else(|| "NULL".to_string()),
-            current_task.due_date.unwrap_or_else(|| "NULL".to_string()),
+            match current_task.tag {
+                Some(t) => format!("'{}'", t),
+                None => "NULL".to_string(),
+            },
+            match current_task.due_date {
+                Some(d) => format!("'{}'", d),
+                None => "NULL".to_string(),
+            },
             current_task.created_at,
             id
         );
+
+        println!("update_undo_query: {}", undo_query);
 
         self.conn.execute(
             "INSERT INTO History (command, created_at) VALUES (?1, ?2)",
@@ -63,14 +71,22 @@ impl DatabaseHandler {
     fn push_delete_to_undo_history(&self, task: Task) -> rusqlite::Result<()> {
         // Add the opposite operation to the History
         let undo_query = format!(
-            "INSERT INTO Tasks (id, text, status, tag, due_date, created_at) VALUES ({}, '{}', '{}', '{}', '{}', '{}')",
+            "INSERT INTO Tasks (id, text, status, tag, due_date, created_at) VALUES ({}, '{}', '{}', {}, {}, '{}')",
             &task.id,
             &task.text,
             &task.status.to_string(),
-            &task.tag.unwrap_or_else(|| "NULL".to_string()), // ensure nullable fields are handled correctly
-            &task.due_date.unwrap_or_else(|| "NULL".to_string()), // ensure nullable fields are handled correctly
+            match &task.tag {
+                Some(t) => format!("'{}'", t),
+                None => "NULL".to_string(),
+            },
+            match &task.due_date {
+                Some(d) => format!("'{}'", d),
+                None => "NULL".to_string(),
+            },
             &task.created_at,
         );
+
+        println!("delete_undo_query {}", &undo_query);
 
         self.conn.execute(
             "INSERT INTO History (command, created_at) VALUES (?1, ?2)",
@@ -327,5 +343,48 @@ mod tests {
         expected[0] = Task::default();
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn undo_create_should_work() {
+        let (db_handler, expected) = setup_single_task();
+        db_handler.create_task(expected.clone());
+        db_handler.undo();
+
+        let actual = db_handler.read_tasks();
+        let expected: Vec<Task> = vec![];
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn undo_delete_should_work() {
+        let (db_handler, expected) = setup_single_task();
+        db_handler.create_task(expected.clone());
+
+        db_handler.delete_task(1);
+
+        db_handler.undo();
+
+        let actual = db_handler.read_tasks();
+
+        assert_eq!(vec![expected], actual);
+    }
+
+    #[test]
+    fn undo_update_should_work() {
+        let (db_handler, expected) = setup_single_task();
+        db_handler.create_task(expected.clone());
+
+        db_handler.update_task(
+            1,
+            &Task::new(1234, "An updated task", TaskStatus::Undone, None, None),
+        );
+
+        db_handler.undo();
+
+        let actual = db_handler.read_tasks();
+
+        assert_eq!(vec![expected], actual);
     }
 }
