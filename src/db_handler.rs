@@ -8,12 +8,13 @@ pub struct DatabaseHandler {
 impl DatabaseHandler {
     pub fn new(database_path: &str) -> Self {
         let conn = Connection::open(database_path).unwrap();
-        DatabaseHandler::create_tables_if_not_exist(&conn);
-
-        DatabaseHandler { conn }
+        match DatabaseHandler::create_tables_if_not_exist(&conn) {
+            Ok(_) => DatabaseHandler { conn },
+            Err(e) => panic!("Could not create database tables: {}", e),
+        }
     }
 
-    fn create_tables_if_not_exist(conn: &Connection) {
+    fn create_tables_if_not_exist(conn: &Connection) -> rusqlite::Result<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS Tasks (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,8 +25,7 @@ impl DatabaseHandler {
                 created_at  TEXT
             )",
             (), // empty list of parameters.
-        )
-        .unwrap();
+        )?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS UndoHistory (
@@ -40,8 +40,7 @@ impl DatabaseHandler {
                 task_created_at  TEXT 
             )",
             (), // empty list of parameters.
-        )
-        .unwrap();
+        )?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS RedoHistory (
@@ -57,8 +56,9 @@ impl DatabaseHandler {
                 task_created_at  TEXT 
             )",
             (), // empty list of parameters.
-        )
-        .unwrap();
+        )?;
+
+        Ok(())
     }
 
     // For testing only
