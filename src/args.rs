@@ -19,8 +19,8 @@ pub enum Commands {
     /// Updates a task with a given id
     Update { id: i32, text: String },
 
-    /// Lists a single task or all
-    List { id: Option<i32> },
+    /// Lists all pending tasks
+    List {},
 
     /// List all tasks
     All {},

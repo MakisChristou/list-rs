@@ -11,7 +11,7 @@ use crate::task::Task;
 use crate::task::TaskStatus;
 
 fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F, should_show_archived: bool) {
-    println!("");
+    println!();
     let undone_tasks: Vec<_> = tasks
         .iter()
         .filter(|x| x.status == TaskStatus::Undone)
@@ -22,14 +22,14 @@ fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F, should_show_a
             "todo-rs add".bold().color("Blue"),
             "todo-rs --help".bold().color("Blue")
         );
-    } else if undone_tasks.len() == 0 && !should_show_archived {
+    } else if undone_tasks.is_empty() && !should_show_archived {
         println!("Great, no pending tasks 🎉");
     } else {
         for task in tasks.iter().filter(|&x| filter(x)) {
-            println!("{}", task.to_string());
+            println!("{}", task);
         }
     }
-    println!("");
+    println!();
 }
 
 fn main() -> Result<()> {
@@ -42,16 +42,16 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Some(Commands::Add { text }) => {
-            match db_handler.create_task(Task::new(1, &text, TaskStatus::Undone, None, None)) {
+            match db_handler.create_task(Task::new(1, text, TaskStatus::Undone, None, None)) {
                 Ok(_) => {
-                    println!("Task Added")
+                    println!("Task Added");
                 }
                 Err(e) => {
                     println!("Error creating task {}", e)
                 }
             }
         }
-        Some(Commands::List { id }) => {
+        Some(Commands::List {}) => {
             print_tasks(&tasks, |task| task.status != TaskStatus::Archived, false);
         }
         Some(Commands::All {}) => {

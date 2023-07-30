@@ -62,10 +62,10 @@ impl DatabaseHandler {
     }
 
     // For testing only
+    #[cfg(test)]
     pub fn new_in_memory() -> Self {
         let conn = Connection::open_in_memory().unwrap();
-        DatabaseHandler::create_tables_if_not_exist(&conn);
-
+        let _ = DatabaseHandler::create_tables_if_not_exist(&conn);
         DatabaseHandler { conn }
     }
 
@@ -85,7 +85,6 @@ impl DatabaseHandler {
         let id = self.conn.last_insert_rowid();
         task.id = id as i32;
 
-        println!("Create_task id: {}", task.id);
         self.push_create_to_undo_history(task)?;
 
         Ok(id as usize)
@@ -123,7 +122,7 @@ impl DatabaseHandler {
             .conn
             .prepare("SELECT id, text, status, tag, due_date, created_at FROM Tasks WHERE id = ?1")
             .unwrap();
-        let task_iter = stmt
+        let mut task_iter = stmt
             .query_map([id], |row| {
                 Ok(Task {
                     id: row.get(0)?,
@@ -136,7 +135,7 @@ impl DatabaseHandler {
             })
             .unwrap();
 
-        for task in task_iter {
+        if let Some(task) = task_iter.next() {
             return Some(task.unwrap());
         }
 
@@ -159,7 +158,7 @@ impl DatabaseHandler {
                 ],
             )?;
 
-            self.push_update_to_undo_history(id, previous_task.clone(), new_task.clone())?;
+            self.push_update_to_undo_history(id, previous_task, new_task.clone())?;
 
             Ok(())
         } else {
@@ -170,7 +169,7 @@ impl DatabaseHandler {
     pub fn delete_task(&self, id: i32) -> rusqlite::Result<()> {
         // Execute delete query
         if let Some(task) = self.read_task(id) {
-            self.push_delete_to_undo_history(task.clone(), id)?;
+            self.push_delete_to_undo_history(task)?;
 
             self.conn.execute("DELETE FROM Tasks WHERE id = ?1", [id])?;
 
@@ -247,7 +246,7 @@ impl DatabaseHandler {
         let undo_query = format!(
             "UPDATE Tasks SET text = '{}', status = '{}', tag = {}, due_date = {}, created_at = '{}' WHERE id = {}",
             previous_task.text,
-            previous_task.status.to_string(),
+            previous_task.status,
             match &previous_task.tag {
                 Some(t) => format!("'{}'", t),
                 None => "NULL".to_string(),
@@ -279,7 +278,7 @@ impl DatabaseHandler {
         Ok(())
     }
 
-    fn push_delete_to_undo_history(&self, task: Task, id: i32) -> rusqlite::Result<()> {
+    fn push_delete_to_undo_history(&self, task: Task) -> rusqlite::Result<()> {
         // Add the opposite operation to the UndoHistory
         let undo_query = format!(
             "INSERT INTO Tasks (id, text, status, tag, due_date, created_at) VALUES ({}, '{}', '{}', {}, {}, '{}')",
@@ -419,7 +418,7 @@ impl DatabaseHandler {
         let redo_query = format!(
             "UPDATE Tasks SET text = '{}', status = '{}', tag = {}, due_date = {}, created_at = '{}' WHERE id = {}",
             task.text,
-            task.status.to_string(),
+            task.status,
             match &task.tag {
                 Some(t) => format!("'{}'", t),
                 None => "NULL".to_string(),
@@ -647,7 +646,7 @@ mod tests {
     }
 
     #[test]
-    fn keep_undo_history_when_performing_redo() {
+    fn should_keep_undo_history_when_performing_redo() {
         let (db_handler, expected) = setup_single_task();
 
         for _ in 0..10 {

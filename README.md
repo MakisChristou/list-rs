@@ -1,18 +1,97 @@
 # todo-rs
 A simple clli todo app written in Rust.
 
+```bash
+$ todo-rs    
+
+Welcome to todo-rs, a cli todo app written in Rust 🦀!
+Task list is empty. 
+Run todo-rs add to add a new task. 
+Run todo-rs --help to get all commands
+```
+
+## Example Usage 
+
+### Add task
+```bash
+$ todo-rs add "Watch Oppenheimer"
+Task Added
+```
+
+### Remove a task by id
+
+```bash
+$ todo-rs remove 3
+Task 3 removed
+```
+
+### Update a task by id
+
+```bash
+$ todo-rs update 3 "A new title"
+Task 3 updated
+```
+
+### Set a task to Done
+```bash
+$ todo-rs done 4
+Task 4 set to Done
+```
+
+### Set a task to Undone
+```bash
+$ todo-rs undone 4
+Task 4 set to Undone
+```
+### Set a task to Archived
+```bash
+$ todo-rs archive 4
+Task 4 set to Archived
+```
+
+### List all pending (undone) tasks
+```bash
+$ todo-rs                    
+
+4) ⌛ Take vitamins
+3) ⌛ Meditate
+2) ⌛ Go to the gym
+1) ⌛ Watch Oppenheimer
+```
+
+### List all tasks
+
+```bash
+$ todo-rs all      
+
+4) 📦 Take vitamins
+3) ⌛ Meditate
+2) ✅ Go to the gym
+1) ⌛ Watch Oppenheimer
+```
+
+### Show archived tasks
+
+```bash
+$ todo-rs archived
+
+4) 📦 Take vitamins
+```
+
 ## Features
 - CRUD Operations: Add, Delete, Update, and List all tasks.
+- Automatic sorting by date created
 - Option to mark tasks as "Done," "Undone," and "Archived."
 - Task list persistent on disk using a database
-- Undo/Redo operations
+- Undo/Redo operations with infinite history
 - Search a task based on its content
 
 ## Future Features
-- ~~Redo operations~~
 - Search a task based on date created as well
 - Clear all tasks, archived tasks, done tasks
-- Pretty printing 
+- Prettier printing
+- Implement task due dates
+- Implement task tags (catregorization)
 
 ## Building 
 ```bash
@@ -28,7 +107,7 @@ Commands:
   add       Adds a task
   remove    Removes a task with a given id
   update    Updates a task with a given id
-  list      Lists a single task or all
+  list      Lists all pending tasks
   all       List all tasks
   archived  List archived tasks
   archive   Sets a task with a given id to Archived
