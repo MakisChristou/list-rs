@@ -66,7 +66,7 @@ impl Display for Task {
             TaskStatus::Done => self.text.strikethrough().to_string(),
             _ => self.text.clone(),
         };
-        write!(f, "{}) {} {}\n", id, checkbox, text.color("Blue"))
+        write!(f, "{}) {} {}", id, checkbox, text.color("Blue"))
     }
 }
 

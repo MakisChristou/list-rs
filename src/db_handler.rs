@@ -49,26 +49,31 @@ impl DatabaseHandler {
         .unwrap();
     }
 
-    fn push_update_to_undo_history(&self, id: i32, task: Task) -> rusqlite::Result<()> {
+    fn push_update_to_undo_history(
+        &self,
+        id: i32,
+        previous_task: Task,
+        new_task: Task,
+    ) -> rusqlite::Result<()> {
         let undo_query = format!(
             "UPDATE Tasks SET text = '{}', status = '{}', tag = {}, due_date = {}, created_at = '{}' WHERE id = {}",
-            task.text,
-            task.status.to_string(),
-            match &task.tag {
+            previous_task.text,
+            previous_task.status.to_string(),
+            match &previous_task.tag {
                 Some(t) => format!("'{}'", t),
                 None => "NULL".to_string(),
             },
-            match &task.due_date {
+            match &previous_task.due_date {
                 Some(d) => format!("'{}'", d),
                 None => "NULL".to_string(),
             },
-            task.created_at,
+            previous_task.created_at,
             id
         );
 
         self.conn.execute(
             "INSERT INTO UndoHistory (command, created_at, task_id, task_text, task_status, task_tag, task_due_date, task_created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            (&undo_query, chrono::Local::now().to_string(), task.id, task.text, task.status.to_string(), task.tag, task.due_date, task.created_at),
+            (&undo_query, chrono::Local::now().to_string(), new_task.id, new_task.text, new_task.status.to_string(), new_task.tag, new_task.due_date, new_task.created_at),
         )?;
 
         Ok(())
@@ -281,7 +286,7 @@ impl DatabaseHandler {
 
     pub fn update_task(&self, id: i32, new_task: &Task) -> rusqlite::Result<()> {
         // Save the current state of the task
-        if let Some(current_task) = self.read_task(id) {
+        if let Some(previous_task) = self.read_task(id) {
             // Execute update query
             self.conn.execute(
                 "UPDATE Tasks SET text = ?1, status = ?2, tag = ?3, due_date = ?4, created_at = ?5 WHERE id = ?6",
@@ -295,7 +300,7 @@ impl DatabaseHandler {
                 ],
             )?;
 
-            self.push_update_to_undo_history(id, current_task.clone())?;
+            self.push_update_to_undo_history(id, previous_task.clone(), new_task.clone())?;
 
             Ok(())
         } else {
@@ -350,10 +355,6 @@ impl DatabaseHandler {
         {
             match self.conn.execute(&undo_command, []) {
                 Ok(_) => {
-                    // If the undo operation is successful, delete the command from the history
-                    self.conn
-                        .execute("DELETE FROM UndoHistory WHERE id = ?1", params![id])?;
-
                     let task = Task::new_with_created_at(
                         task_id,
                         &task_text,
@@ -364,6 +365,10 @@ impl DatabaseHandler {
                     );
 
                     self.update_redo_table(&undo_command, task)?;
+
+                    // If the undo operation is successful, delete the command from the history
+                    self.conn
+                        .execute("DELETE FROM UndoHistory WHERE id = ?1", params![id])?;
                 }
                 Err(err) => {
                     return Err(err);
