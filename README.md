@@ -96,10 +96,11 @@ $ todo-rs search "Hello"
 - Task list persistent on disk using a database
 - Undo/Redo operations with infinite history
 - Search a task based on its content
+- Configurable database path
 
 ## Future Work
 - Implement task due dates
-- Implement task tags (catregorization)
+- Implement task tags
 - Interactive mode
 
 ## Building 
@@ -109,7 +110,7 @@ cargo b --release
 
 ## Run tests
 ```bash
-cargo t
+cargo t --release
 ```
 
 ## Cli Arguments
@@ -137,8 +138,17 @@ Options:
   -V, --version  Print version
 ```
 
+
+## Setting a custom database path
+Create a `.env` file and add the following line
+
+```bash
+DB_PATH=/your/custom/path/tasks.db
+```
+
 ## Crates Used
 - rusqlite (database)
 - clap (argument parsing)
 - colored (terminal pretty printing)
 - chrono (datetime stuff)
+- dotenv (for configuration purposes)

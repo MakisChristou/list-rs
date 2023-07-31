@@ -1,5 +1,7 @@
 use colored::Colorize;
+use dotenv::dotenv;
 use rusqlite::{types::FromSql, Result};
+use std::env;
 
 mod args;
 mod db_handler;
@@ -33,7 +35,13 @@ fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F, should_show_a
 }
 
 fn main() -> Result<()> {
-    let db_handler = DatabaseHandler::new("tasks.db");
+    dotenv().ok();
+    let database_path = match env::var("DB_PATH") {
+        Ok(value) => value,
+        Err(_) => String::from("tasks.db"),
+    };
+
+    let db_handler = DatabaseHandler::new(&database_path);
 
     let mut tasks = db_handler.read_tasks();
     tasks.sort_by(|a, b| b.created_at.cmp(&a.created_at));
