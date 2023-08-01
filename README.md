@@ -102,6 +102,7 @@ $ todo-rs search "Hello"
 - Implement task due dates
 - Implement task tags
 - Interactive mode
+- On Disk encryption
 
 ## Building 
 ```bash
