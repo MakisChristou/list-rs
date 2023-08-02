@@ -10,8 +10,6 @@ Run todo-rs add to add a new task.
 Run todo-rs --help to get all commands
 ```
 
-[![asciicast](https://asciinema.org/a/J0gF6o0Vh2MJbCcXYwg9WiTFu.svg)](https://asciinema.org/a/J0gF6o0Vh2MJbCcXYwg9WiTFu)
-
 ## Example Usage 
 
 ### Add task
