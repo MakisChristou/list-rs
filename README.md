@@ -1,59 +1,57 @@
-# todo-rs
+# list-rs
 A simple clli todo app written in Rust.
 
 ```bash
-$ todo-rs    
+$ list-rs    
 
-Welcome to todo-rs, a cli todo app written in Rust 🦀!
+Welcome to list-rs, a cli todo app written in Rust 🦀!
 Task list is empty. 
-Run todo-rs add to add a new task. 
-Run todo-rs --help to get all commands
+Run list-rs add to add a new task. 
+Run list-rs --help to get all commands
 ```
-
-[![asciicast](https://asciinema.org/a/J0gF6o0Vh2MJbCcXYwg9WiTFu.svg)](https://asciinema.org/a/J0gF6o0Vh2MJbCcXYwg9WiTFu)
 
 ## Example Usage 
 
 ### Add task
 ```bash
-$ todo-rs add "Watch Oppenheimer"
+$ list-rs add "Watch Oppenheimer"
 Task Added
 ```
 
 ### Remove a task by id
 
 ```bash
-$ todo-rs remove 3
+$ list-rs remove 3
 Task 3 removed
 ```
 
 ### Update a task by id
 
 ```bash
-$ todo-rs update 3 "A new title"
+$ list-rs update 3 "A new title"
 Task 3 updated
 ```
 
 ### Set a task to Done
 ```bash
-$ todo-rs done 4
+$ list-rs done 4
 Task 4 set to Done
 ```
 
 ### Set a task to Undone
 ```bash
-$ todo-rs undone 4
+$ list-rs undone 4
 Task 4 set to Undone
 ```
 ### Set a task to Archived
 ```bash
-$ todo-rs archive 4
+$ list-rs archive 4
 Task 4 set to Archived
 ```
 
 ### List all pending (undone) tasks
 ```bash
-$ todo-rs                    
+$ list-rs                    
 
 4) ⌛ Take vitamins
 3) ⌛ Meditate
@@ -64,7 +62,7 @@ $ todo-rs
 ### List all tasks
 
 ```bash
-$ todo-rs all      
+$ list-rs all      
 
 4) 📦 Take vitamins
 3) ⌛ Meditate
@@ -75,7 +73,7 @@ $ todo-rs all
 ### Show archived tasks
 
 ```bash
-$ todo-rs archived
+$ list-rs archived
 
 4) 📦 Take vitamins
 ```
@@ -83,7 +81,7 @@ $ todo-rs archived
 ### Search a task by its contents
 
 ```bash
-$ todo-rs search "Hello"   
+$ list-rs search "Hello"   
 
 6) ⌛ Hello World
 5) ⌛ Hello
@@ -115,8 +113,8 @@ cargo t --release
 
 ## Cli Arguments
 ```bash
-$ todo-rs --help
-Usage: todo-rs [COMMAND]
+$ list-rs --help
+Usage: list-rs [COMMAND]
 
 Commands:
   add       Adds a task

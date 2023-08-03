@@ -20,9 +20,9 @@ fn print_tasks<F: Fn(&Task) -> bool>(tasks: &Vec<Task>, filter: F, should_show_a
         .collect();
     if tasks.is_empty() {
         println!(
-            "Welcome to todo-rs, a cli todo app written in Rust 🦀!\nTask list is empty. \nRun {} to add a new task. \nRun {} to get all commands",
-            "todo-rs add".bold().color("Blue"),
-            "todo-rs --help".bold().color("Blue")
+            "Welcome to list-rs, a cli todo app written in Rust 🦀!\nTask list is empty. \nRun {} to add a new task. \nRun {} to get all commands",
+            "list-rs add".bold().color("Blue"),
+            "list-rs --help".bold().color("Blue")
         );
     } else if undone_tasks.is_empty() && !should_show_archived {
         println!("Great, no pending tasks 🎉");
