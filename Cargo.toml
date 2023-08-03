@@ -1,7 +1,7 @@
 [package]
 name = "list-rs"
-version = "0.1.0"
-description = "A simple clli todo app"
+version = "0.1.1"
+description = "A simple cli todo app"
 edition = "2021"
 authors = ["Makis Christou <makis_christou@protonmail.com>"]
 license = "GPL-3.0-or-later"

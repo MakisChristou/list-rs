@@ -44,7 +44,7 @@ fn main() -> Result<()> {
     let db_handler = DatabaseHandler::new(&database_path);
 
     let mut tasks = db_handler.read_tasks();
-    tasks.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    tasks.sort_by(|a, b| a.created_at.cmp(&b.created_at));
 
     let cli = Cli::parse_arguments();
 
